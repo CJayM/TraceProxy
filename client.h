@@ -1,9 +1,11 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#include <QDateTime>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QQueue>
 #include <QSpinBox>
 #include <QTcpSocket>
 #include <QTextEdit>
@@ -31,13 +33,15 @@ private:
     QSpinBox* spinPort_ = nullptr;
     QLineEdit* editIp_ = nullptr;
     QTextEdit* log_ = nullptr;
-    QPushButton* btnConnect_ = nullptr;
+    QLabel* lblConnection_ = nullptr;
 
     int serverPort_ = 3030;
     QString serverIp_ = "127.0.0.1";
 
     QTcpSocket* tcpSocket = nullptr;
     bool isConnected_ = false;
+
+    QQueue<std::pair<QDateTime, QByteArray>> toClientQueue_;
 
     void initUi();
     void clientConnect();

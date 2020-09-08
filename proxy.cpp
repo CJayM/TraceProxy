@@ -1,22 +1,22 @@
-#include "server.h"
+#include "proxy.h"
 
 #include <QNetworkInterface>
 #include <QTimer>
 #include <QVBoxLayout>
 
-Server::Server(QWidget* parent)
+Proxy::Proxy(QWidget* parent)
     : QWidget(parent)
 {
     initUi();
-    connect(btnStart_, &QPushButton::clicked, this, &Server::onStartClicked);
+    connect(btnStart_, &QPushButton::clicked, this, &Proxy::onStartClicked);
 }
 
-bool Server::isConnected() const
+bool Proxy::isConnected() const
 {
     return isConnected_;
 }
 
-void Server::sendData(QByteArray data)
+void Proxy::sendData(QByteArray data)
 {
     if (isConnected_ == false)
         return;
@@ -27,7 +27,7 @@ void Server::sendData(QByteArray data)
     log_->append(data.toHex());
 }
 
-void Server::onStartClicked()
+void Proxy::onStartClicked()
 {
     if (isStarted_) {
         stopServer();
@@ -36,17 +36,17 @@ void Server::onStartClicked()
     }
 }
 
-void Server::onClientConnected()
+void Proxy::onClientConnected()
 {
     log_->append("Клиент подключился");
     isConnected_ = true;
     clientConnection_ = tcpServer->nextPendingConnection();
     connect(clientConnection_, &QAbstractSocket::disconnected,
-        this, &Server::onDisconnectClient);
-    connect(clientConnection_, &QIODevice::readyRead, this, &Server::onDataRead);
+        this, &Proxy::onDisconnectClient);
+    connect(clientConnection_, &QIODevice::readyRead, this, &Proxy::onDataRead);
 }
 
-void Server::onDisconnectClient()
+void Proxy::onDisconnectClient()
 {
     clientConnection_->deleteLater();
     clientConnection_ = nullptr;
@@ -56,14 +56,14 @@ void Server::onDisconnectClient()
         log_->append("Клиент отключён");
 }
 
-void Server::onDataRead()
+void Proxy::onDataRead()
 {
     auto data = clientConnection_->readAll();
     emit dataReceived(data);
     log_->append("Пришли данные");
 }
 
-void Server::initUi()
+void Proxy::initUi()
 {
     auto vbox = new QVBoxLayout();
     setLayout(vbox);
@@ -84,7 +84,7 @@ void Server::initUi()
     vbox->addWidget(log_);
 }
 
-void Server::startServer()
+void Proxy::startServer()
 {
     btnStart_->setEnabled(false);
     btnStart_->setText("Запуск...");
@@ -92,7 +92,7 @@ void Server::startServer()
 
     QTimer::singleShot(1, [&]() {
         tcpServer = new QTcpServer(this);
-        connect(tcpServer, &QTcpServer::newConnection, this, &Server::onClientConnected);
+        connect(tcpServer, &QTcpServer::newConnection, this, &Proxy::onClientConnected);
 
         if (!tcpServer->listen(QHostAddress::Any, asClientPort_)) {
             log_->append(QString("Не удалось запустить сервер: %1.")
@@ -121,7 +121,7 @@ void Server::startServer()
     });
 }
 
-void Server::stopServer()
+void Proxy::stopServer()
 {
     tcpServer->close();
 

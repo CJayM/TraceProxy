@@ -16,8 +16,7 @@ Client::Client(QWidget* parent)
     connect(tcpSocket, &QTcpSocket::connected, this, &Client::onConnected);
     connect(tcpSocket, static_cast<void (QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),
         this, &Client::displayError);
-    connect(btnConnect_, &QAbstractButton::clicked,
-        this, &Client::onConnectBtnClicked);
+
 }
 
 bool Client::isConnected() const
@@ -57,8 +56,8 @@ void Client::initUi()
         spinPort_->setValue(serverPort_);
 
         hbox->addStretch(0);
-        btnConnect_ = new QPushButton("Подключить");
-        hbox->addWidget(btnConnect_);
+        lblConnection_ = new QLabel("Не подключён");
+        hbox->addWidget(lblConnection_);
         vbox->addLayout(hbox);
     }
     log_ = new QTextEdit();
@@ -67,23 +66,20 @@ void Client::initUi()
 
 void Client::clientConnect()
 {
-    btnConnect_->setText("Подключение...");
-    btnConnect_->setEnabled(false);
+    lblConnection_->setText("Подключение...");
     tcpSocket->abort();
     tcpSocket->connectToHost(serverIp_, serverPort_);
 }
 
 void Client::clientDisconnect()
 {
-    btnConnect_->setText("Отключение...");
-    btnConnect_->setEnabled(false);
+    lblConnection_->setText("Отключение...");
 
     tcpSocket->abort();
     log_->append("Отключено");
     isConnected_ = false;
 
-    btnConnect_->setText("Подключить");
-    btnConnect_->setEnabled(true);
+    lblConnection_->setText("Не подключён");
 }
 
 void Client::onConnectBtnClicked()
@@ -104,8 +100,7 @@ void Client::onDataRead()
 void Client::onConnected()
 {
     isConnected_ = true;
-    btnConnect_->setText("Отключить");
-    btnConnect_->setEnabled(true);
+    lblConnection_->setText("Подключён");
     log_->append("Подключено");
 }
 
@@ -123,7 +118,5 @@ void Client::displayError(QAbstractSocket::SocketError socketError)
     default:
         log_->append(QString("Произошла следующая ошибка: %1.")
                              .arg(tcpSocket->errorString()));
-    }
-
-    btnConnect_->setEnabled(true);
+    }    
 }

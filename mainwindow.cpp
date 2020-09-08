@@ -22,9 +22,6 @@ MainWindow::MainWindow(QWidget* parent)
     split->addWidget(&asProxy);
     split->addWidget(&asClient);
     decorateSplitter(split, 1);
-
-    proxyQueue.setClient(&asClient);
-    proxyQueue.setServer(&asProxy);
 }
 
 MainWindow::~MainWindow()

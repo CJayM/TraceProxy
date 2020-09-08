@@ -1,19 +1,21 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <QDateTime>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QQueue>
 #include <QSpinBox>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTextEdit>
 #include <QWidget>
 
-class Server : public QWidget {
+class Proxy : public QWidget {
     Q_OBJECT
 public:
-    Server(QWidget* parent = nullptr);
+    Proxy(QWidget* parent = nullptr);
 
     bool isConnected() const;
 
@@ -40,6 +42,7 @@ private:
     bool isConnected_ = false;
 
     QTcpSocket* clientConnection_ = nullptr;
+    QQueue<std::pair<QDateTime, QByteArray>> toServerQueue_;
 
     void initUi();
     void startServer();

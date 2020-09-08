@@ -2,8 +2,7 @@
 #define MAINWINDOW_H
 
 #include "client.h"
-#include "proxyqueue.h"
-#include "server.h"
+#include "proxy.h"
 
 #include <QMainWindow>
 #include <QSpinBox>
@@ -20,7 +19,6 @@ public:
 
 private:
     Client asClient;
-    Server asProxy;
-    ProxyQueue proxyQueue;
+    Proxy asProxy;
 };
 #endif // MAINWINDOW_H

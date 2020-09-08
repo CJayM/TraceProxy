@@ -19,14 +19,12 @@ SOURCES += \
     client.cpp \
     main.cpp \
     mainwindow.cpp \
-    proxyqueue.cpp \
-    server.cpp
+    proxy.cpp
 
 HEADERS += \
     client.h \
     mainwindow.h \
-    proxyqueue.h \
-    server.h
+    proxy.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
