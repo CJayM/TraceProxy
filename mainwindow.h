@@ -1,12 +1,18 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "server.h"
-
+#include <QDateTime>
 #include <QMainWindow>
+#include <QPushButton>
 #include <QSpinBox>
 #include <QSplitter>
 #include <QTcpServer>
+#include <QTextEdit>
+#include <QByteArray>
+#include <QLabel>
+#include <QQueue>
+#include <QTcpSocket>
+#include <QAbstractSocket>
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -23,9 +29,12 @@ private slots:
     void onDisconnectClient();
     void onDataRead();
 
-private:
-    Server asClient;
+    // to server
+    void onServerDataRead();
+    void onConnectedToServer();
+    void displayError(QAbstractSocket::SocketError socketError);
 
+private:
     // proxy
     int asClientPort_ = 3031;
     QLineEdit* editOutIp_ = nullptr;
@@ -45,5 +54,27 @@ private:
     bool isClientConnected() const;
     QWidget* makeLeftPanel();
     // end proxy
+
+
+    // client to server
+    QSpinBox* spinPort_ = nullptr;
+    QLineEdit* editIp_ = nullptr;
+    QTextEdit* fromServerlog_ = nullptr;
+    QLabel* lblConnection_ = nullptr;
+
+    int serverPort_ = 3030;
+    QString serverIp_ = "127.0.0.1";
+
+    QTcpSocket* tcpSocket = nullptr;
+    bool hasServerConnection_ = false;
+
+    QQueue<std::pair<QDateTime, QByteArray>> toClientQueue_;
+
+    QWidget* makeServerPanel();
+    void clientConnect();
+    void clientDisconnect();
+    void connectToServer();
+    void disconnectFromServer();
+    // end client to server
 };
 #endif // MAINWINDOW_H

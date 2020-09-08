@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 
+#include <QAbstractSocket>
+#include <QAbstractSocket>
 #include <QLabel>
 #include <QLineEdit>
 #include <QNetworkInterface>
@@ -24,7 +26,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     root->addWidget(split);
     split->addWidget(makeLeftPanel());
-    split->addWidget(&asClient);
+    split->addWidget(makeServerPanel());
     decorateSplitter(split, 1);
 }
 
@@ -90,16 +92,22 @@ void MainWindow::onClientConnected()
     connect(clientConnection_, &QAbstractSocket::disconnected,
         this, &MainWindow::onDisconnectClient);
     connect(clientConnection_, &QIODevice::readyRead, this, &MainWindow::onDataRead);
+
+    connectToServer();
 }
 
 void MainWindow::onDisconnectClient()
 {
-    clientConnection_->deleteLater();
-    clientConnection_ = nullptr;
+    if (clientConnection_) {
+        clientConnection_->deleteLater();
+        clientConnection_ = nullptr;
+    }
     isConnected_ = false;
 
     if (log_)
         log_->append("Клиент отключён");
+
+    disconnectFromServer();
 }
 
 void MainWindow::onDataRead()
@@ -107,6 +115,21 @@ void MainWindow::onDataRead()
     auto data = clientConnection_->readAll();
     //        emit dataReceived(data);
     log_->append("Пришли данные");
+}
+
+void MainWindow::onServerDataRead()
+{
+    qWarning()  << "Not implemented MainWindow::onServerDataRead";
+}
+
+void MainWindow::onConnectedToServer()
+{
+    qWarning()  << "Not implemented MainWindow::onConnectedToServer";
+}
+
+void MainWindow::displayError(QAbstractSocket::SocketError socketError)
+{
+    qWarning()  << "Not implemented MainWindow::displayError";
 }
 
 void MainWindow::startProxy()
@@ -185,4 +208,57 @@ QWidget* MainWindow::makeLeftPanel()
     connect(btnStart_, &QPushButton::clicked, this, &MainWindow::onStartClicked);
 
     return res;
+}
+
+QWidget* MainWindow::makeServerPanel()
+{
+    QWidget* res = new QWidget();
+
+    auto vbox = new QVBoxLayout();
+    res->setLayout(vbox);
+    {
+        auto hbox = new QHBoxLayout();
+        hbox->addWidget(new QLabel("Server IP:"));
+        editIp_ = new QLineEdit();
+        editIp_->setMaximumWidth(120);
+        editIp_->setText(serverIp_);
+        hbox->addWidget(editIp_);
+
+        hbox->addWidget(new QLabel("Port:"));
+        spinPort_ = new QSpinBox();
+        spinPort_->setMaximumWidth(70);
+        spinPort_->setRange(1024, 0xffff);
+        hbox->addWidget(spinPort_);
+        spinPort_->setValue(serverPort_);
+
+        hbox->addStretch(0);
+        lblConnection_ = new QLabel("Не подключён");
+        hbox->addWidget(lblConnection_);
+        vbox->addLayout(hbox);
+    }
+    fromServerlog_ = new QTextEdit();
+    vbox->addWidget(fromServerlog_);
+
+    return res;
+}
+
+void MainWindow::connectToServer()
+{
+    tcpSocket = new QTcpSocket(this);
+    connect(tcpSocket, &QIODevice::readyRead, this, &MainWindow::onServerDataRead);
+    connect(tcpSocket, &QTcpSocket::connected, this, &MainWindow::onConnectedToServer);
+    connect(tcpSocket, static_cast<void (QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),
+        this, &MainWindow::displayError);
+
+    fromServerlog_->append("Создано подключение");
+}
+
+void MainWindow::disconnectFromServer()
+{
+    if (tcpSocket) {
+        tcpSocket->close();
+        tcpSocket->deleteLater();
+        tcpSocket = nullptr;
+        fromServerlog_->append("Отключён");
+    }
 }
