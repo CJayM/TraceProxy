@@ -18,12 +18,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    proxy.cpp \
     server.cpp
 
 HEADERS += \
     mainwindow.h \
-    proxy.h \
     server.h
 
 # Default rules for deployment.

@@ -1,4 +1,4 @@
-#include "client.h"
+#include "server.h"
 
 #include <QLabel>
 #include <QMessageBox>

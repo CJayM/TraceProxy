@@ -18,17 +18,19 @@ MainWindow::MainWindow(QWidget* parent)
 
     QSplitter* split = new QSplitter();
 
+    makeLeftPanel();
+
     root->addWidget(split);
-    split->addWidget(&asProxy);
+    split->addWidget(makeLeftPanel());
     split->addWidget(&asClient);
     decorateSplitter(split, 1);
+
+    //    connect(btnStart_, &QPushButton::clicked, this, &Proxy::onStartClicked);
 }
 
 MainWindow::~MainWindow()
 {
 }
-
-
 
 void MainWindow::decorateSplitter(QSplitter* splitter, int index)
 {
@@ -69,4 +71,44 @@ void MainWindow::decorateSplitter(QSplitter* splitter, int index)
         layout->addLayout(vbox);
         layout->addStretch();
     }
+}
+
+void MainWindow::onStartClicked()
+{
+}
+
+void MainWindow::onClientConnected()
+{
+}
+
+void MainWindow::onDisconnectClient()
+{
+}
+
+void MainWindow::onDataRead()
+{
+}
+
+QWidget* MainWindow::makeLeftPanel()
+{
+    QWidget* res = new QWidget();
+    auto vbox = new QVBoxLayout();
+    res->setLayout(vbox);
+    {
+        auto hbox = new QHBoxLayout();
+        hbox->addWidget(new QLabel("Port:"));
+        spinOutPort_ = new QSpinBox();
+        spinOutPort_->setRange(1024, 0xffff);
+        hbox->addWidget(spinOutPort_);
+        spinOutPort_->setValue(asClientPort_);
+
+        hbox->addStretch();
+        btnStart_ = new QPushButton("Запустить прокси");
+        hbox->addWidget(btnStart_);
+        vbox->addLayout(hbox);
+    }
+    log_ = new QTextEdit(res);
+    vbox->addWidget(log_);
+
+    return res;
 }
