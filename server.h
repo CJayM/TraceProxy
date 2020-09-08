@@ -11,10 +11,10 @@
 #include <QTextEdit>
 #include <QWidget>
 
-class Client : public QWidget {
+class Server : public QWidget {
     Q_OBJECT
 public:
-    Client(QWidget* parent = nullptr);
+    Server(QWidget* parent = nullptr);
     bool isConnected() const;
 
 public slots:

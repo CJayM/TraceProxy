@@ -7,24 +7,24 @@
 #include <QTimer>
 #include <QVBoxLayout>
 
-Client::Client(QWidget* parent)
+Server::Server(QWidget* parent)
     : QWidget(parent)
 {
     initUi();
     tcpSocket = new QTcpSocket(this);
-    connect(tcpSocket, &QIODevice::readyRead, this, &Client::onDataRead);
-    connect(tcpSocket, &QTcpSocket::connected, this, &Client::onConnected);
+    connect(tcpSocket, &QIODevice::readyRead, this, &Server::onDataRead);
+    connect(tcpSocket, &QTcpSocket::connected, this, &Server::onConnected);
     connect(tcpSocket, static_cast<void (QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),
-        this, &Client::displayError);
+        this, &Server::displayError);
 
 }
 
-bool Client::isConnected() const
+bool Server::isConnected() const
 {
     return isConnected_;
 }
 
-void Client::sendData(QByteArray data)
+void Server::sendData(QByteArray data)
 {
     if (isConnected_ == false)
         return;
@@ -36,7 +36,7 @@ void Client::sendData(QByteArray data)
     log_->append(data.toHex());
 }
 
-void Client::initUi()
+void Server::initUi()
 {
     auto vbox = new QVBoxLayout();
     setLayout(vbox);
@@ -64,14 +64,14 @@ void Client::initUi()
     vbox->addWidget(log_);
 }
 
-void Client::clientConnect()
+void Server::clientConnect()
 {
     lblConnection_->setText("Подключение...");
     tcpSocket->abort();
     tcpSocket->connectToHost(serverIp_, serverPort_);
 }
 
-void Client::clientDisconnect()
+void Server::clientDisconnect()
 {
     lblConnection_->setText("Отключение...");
 
@@ -82,7 +82,7 @@ void Client::clientDisconnect()
     lblConnection_->setText("Не подключён");
 }
 
-void Client::onConnectBtnClicked()
+void Server::onConnectBtnClicked()
 {
     if (isConnected_)
         clientDisconnect();
@@ -90,21 +90,21 @@ void Client::onConnectBtnClicked()
         clientConnect();
 }
 
-void Client::onDataRead()
+void Server::onDataRead()
 {
     auto data = tcpSocket->readAll();
     emit dataReceived(data);
     log_->append("Пришли данные");
 }
 
-void Client::onConnected()
+void Server::onConnected()
 {
     isConnected_ = true;
     lblConnection_->setText("Подключён");
     log_->append("Подключено");
 }
 
-void Client::displayError(QAbstractSocket::SocketError socketError)
+void Server::displayError(QAbstractSocket::SocketError socketError)
 {
     switch (socketError) {
     case QAbstractSocket::RemoteHostClosedError:

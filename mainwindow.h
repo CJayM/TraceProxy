@@ -18,7 +18,7 @@ public:
     void decorateSplitter(QSplitter* splitter, int index);
 
 private:
-    Client asClient;
+    Server asClient;
     Proxy asProxy;
 };
 #endif // MAINWINDOW_H
