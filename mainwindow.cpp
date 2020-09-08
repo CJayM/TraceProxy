@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget* parent)
     QSplitter* split = new QSplitter();
 
     root->addWidget(split);
-    split->addWidget(makeRightPanel());
+    split->addWidget(&asProxy);
     split->addWidget(&asClient);
     decorateSplitter(split, 1);
 }
@@ -28,30 +28,7 @@ MainWindow::~MainWindow()
 {
 }
 
-QWidget* MainWindow::makeRightPanel()
-{
-    QWidget* res = new QWidget();
-    auto vbox = new QVBoxLayout();
-    res->setLayout(vbox);
-    {
-        auto hbox = new QHBoxLayout();
-        hbox->addWidget(new QLabel("Output Ip:"));
-        editOutIp_ = new QLineEdit(asClientIp_);
-        hbox->addWidget(editOutIp_);
 
-        hbox->addWidget(new QLabel("Port:"));
-        spinOutPort_ = new QSpinBox();
-        spinOutPort_->setRange(1024, 0xffff);
-        hbox->addWidget(spinOutPort_);
-        spinOutPort_->setValue(asClientPort_);
-
-        hbox->addStretch();
-        hbox->addWidget(new QPushButton("Connect"));
-        vbox->addLayout(hbox);
-    }
-    vbox->addWidget(new QTextEdit());
-    return res;
-}
 
 void MainWindow::decorateSplitter(QSplitter* splitter, int index)
 {

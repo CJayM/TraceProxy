@@ -12,6 +12,7 @@
 
 class Client: public QWidget
 {
+    Q_OBJECT
 public:
     Client(QWidget* parent=nullptr);
 
