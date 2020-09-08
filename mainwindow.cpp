@@ -36,7 +36,11 @@ QWidget* MainWindow::makeLeftPanel()
     {
         auto hbox = new QHBoxLayout();
         hbox->addWidget(new QLabel("Input Port:"));
-        hbox->addWidget(new QSpinBox());
+        spinInPort_ = new QSpinBox();
+        spinInPort_->setRange(1024, 0xffff);
+        hbox->addWidget(spinInPort_);
+        spinInPort_->setValue(asServerPort_);
+
         hbox->addStretch();
         hbox->addWidget(new QPushButton("Start server"));
         vbox->addLayout(hbox);
@@ -53,10 +57,14 @@ QWidget* MainWindow::makeRightPanel()
     {
         auto hbox = new QHBoxLayout();
         hbox->addWidget(new QLabel("Output Ip:"));
-        hbox->addWidget(new QLineEdit("127.0.0.1"));
+        editOutIp_ = new QLineEdit(asClientIp_);
+        hbox->addWidget(editOutIp_);
 
         hbox->addWidget(new QLabel("Port:"));
-        hbox->addWidget(new QSpinBox());
+        spinOutPort_ = new QSpinBox();
+        spinOutPort_->setRange(1024, 0xffff);
+        hbox->addWidget(spinOutPort_);
+        spinOutPort_->setValue(asClientPort_);
 
         hbox->addStretch();
         hbox->addWidget(new QPushButton("Connect"));
