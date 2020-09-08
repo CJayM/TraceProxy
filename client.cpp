@@ -13,10 +13,11 @@ Client::Client(QWidget* parent)
     initUi();
     tcpSocket = new QTcpSocket(this);
     connect(tcpSocket, &QIODevice::readyRead, this, &Client::onDataRead);
+    connect(tcpSocket, &QTcpSocket::connected, this, &Client::onConnected);
     connect(tcpSocket, static_cast<void (QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),
         this, &Client::displayError);
     connect(btnConnect_, &QAbstractButton::clicked,
-        this, &Client::requestNewConnection);
+        this, &Client::onConnectBtnClicked);
 }
 
 void Client::initUi()
@@ -45,24 +46,49 @@ void Client::initUi()
     }
     logEdit_ = new QTextEdit();
     vbox->addWidget(logEdit_);
-    statusLabel = new QLabel("");
-    vbox->addWidget(statusLabel);
 }
 
-void Client::requestNewConnection()
+void Client::clientConnect()
 {
-    statusLabel->setText("Подключение...");
+    btnConnect_->setText("Подключение...");
     btnConnect_->setEnabled(false);
     tcpSocket->abort();
     tcpSocket->connectToHost(serverIp_, serverPort_);
 }
 
+void Client::clientDisconnect()
+{
+    btnConnect_->setText("Отключение...");
+    btnConnect_->setEnabled(false);
+
+    tcpSocket->abort();
+    logEdit_->append("Отключено");
+    isConnected_ = false;
+
+    btnConnect_->setText("Подключить");
+    btnConnect_->setEnabled(true);
+}
+
+void Client::onConnectBtnClicked()
+{
+    if (isConnected_)
+        clientDisconnect();
+    else
+        clientConnect();
+}
+
 void Client::onDataRead()
 {
     auto data = tcpSocket->readAll();
+    logEdit_->append("Пришли данные");
+}
 
-    statusLabel->setText("Сервер подключён");
-    //    btnConnect_->setEnabled(true);
+void Client::onConnected()
+{
+    isConnected_ = true;
+    btnConnect_->setText("Отключить");
+    btnConnect_->setEnabled(true);
+    logEdit_->append("Подключено");
 }
 
 void Client::displayError(QAbstractSocket::SocketError socketError)
@@ -72,16 +98,13 @@ void Client::displayError(QAbstractSocket::SocketError socketError)
         break;
     case QAbstractSocket::HostNotFoundError:
         logEdit_->append("Сервер не найден. Проверьте правильность указанных IP и порта.");
-        statusLabel->setText("Сервер не найден");
         break;
     case QAbstractSocket::ConnectionRefusedError:
         logEdit_->append("Подключение отклонено.");
-        statusLabel->setText("Подключение отклонено");
         break;
     default:
         logEdit_->append(QString("Произошла следующая ошибка: %1.")
                              .arg(tcpSocket->errorString()));
-        statusLabel->setText("Ошибка");
     }
 
     btnConnect_->setEnabled(true);

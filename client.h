@@ -17,12 +17,12 @@ public:
     Client(QWidget* parent=nullptr);
 
 private slots:
-    void requestNewConnection();
+    void onConnectBtnClicked();
     void onDataRead();
+    void onConnected();
     void displayError(QAbstractSocket::SocketError socketError);
 
 private:
-    QLabel *statusLabel = nullptr;
     QSpinBox* spinPort_ = nullptr;
     QLineEdit* editIp_ = nullptr;
     QTextEdit* logEdit_ = nullptr;
@@ -32,8 +32,11 @@ private:
     QString serverIp_ = "127.0.0.1";
 
     QTcpSocket *tcpSocket = nullptr;
+    bool isConnected_ = false;
 
     void initUi();
+    void clientConnect();
+    void clientDisconnect();
 };
 
 #endif // CLIENT_H
