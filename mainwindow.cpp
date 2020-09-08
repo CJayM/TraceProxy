@@ -19,34 +19,13 @@ MainWindow::MainWindow(QWidget* parent)
     QSplitter* split = new QSplitter();
 
     root->addWidget(split);
-    split->addWidget(makeLeftPanel());
     split->addWidget(makeRightPanel());
+    split->addWidget(&asClient);
     decorateSplitter(split, 1);
 }
 
 MainWindow::~MainWindow()
 {
-}
-
-QWidget* MainWindow::makeLeftPanel()
-{
-    QWidget* res = new QWidget();
-    auto vbox = new QVBoxLayout();
-    res->setLayout(vbox);
-    {
-        auto hbox = new QHBoxLayout();
-        hbox->addWidget(new QLabel("Input Port:"));
-        spinInPort_ = new QSpinBox();
-        spinInPort_->setRange(1024, 0xffff);
-        hbox->addWidget(spinInPort_);
-        spinInPort_->setValue(asServerPort_);
-
-        hbox->addStretch();
-        hbox->addWidget(new QPushButton("Start server"));
-        vbox->addLayout(hbox);
-    }
-    vbox->addWidget(new QTextEdit());
-    return res;
 }
 
 QWidget* MainWindow::makeRightPanel()
