@@ -23,8 +23,8 @@ void Server::sendData(QByteArray data)
     if (clientConnection_->isOpen() == false)
         return;
 
-    log_->append(QString("Sending %1 bytes").arg(data.length()));
     clientConnection_->write(data);
+    log_->append(data.toHex());
 }
 
 void Server::onStartClicked()
@@ -52,7 +52,8 @@ void Server::onDisconnectClient()
     clientConnection_ = nullptr;
     isConnected_ = false;
 
-    log_->append("Клиент отключён");
+    if (log_)
+        log_->append("Клиент отключён");
 }
 
 void Server::onDataRead()
@@ -79,7 +80,7 @@ void Server::initUi()
         hbox->addWidget(btnStart_);
         vbox->addLayout(hbox);
     }
-    log_ = new QTextEdit();
+    log_ = new QTextEdit(this);
     vbox->addWidget(log_);
 }
 

@@ -33,8 +33,8 @@ void Client::sendData(QByteArray data)
     if (tcpSocket->isOpen() == false)
         return;
 
-    log_->append(QString("Sending %1 bytes").arg(data.length()));
     tcpSocket->write(data);
+    log_->append(data.toHex());
 }
 
 void Client::initUi()
