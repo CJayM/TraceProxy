@@ -27,10 +27,13 @@ private:
     QPushButton* btnStart_ = nullptr;
     QTcpServer *tcpServer = nullptr;
     QTextEdit* log_ = nullptr;
+    bool isStarted_ = false;
 
     QTcpSocket *clientConnection_ = nullptr;
 
     void initUi();
+    void startServer();
+    void stopServer();
 };
 
 #endif // SERVER_H

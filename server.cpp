@@ -1,6 +1,7 @@
 #include "server.h"
 
 #include <QNetworkInterface>
+#include <QTimer>
 #include <QVBoxLayout>
 
 Server::Server(QWidget* parent)
@@ -13,30 +14,11 @@ Server::Server(QWidget* parent)
 
 void Server::onStartClicked()
 {
-    btnStart_->setEnabled(false);
-    tcpServer = new QTcpServer(this);
-    if (!tcpServer->listen(QHostAddress::Any, asClientPort_)) {
-        log_->append(QString("Не удалось запустить сервер: %1.")
-                         .arg(tcpServer->errorString()));
-        btnStart_->setEnabled(true);
-        return;
+    if (isStarted_) {
+        stopServer();
+    } else {
+        startServer();
     }
-
-    QString ipAddress;
-    QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
-    // use the first non-localhost IPv4 address
-    for (int i = 0; i < ipAddressesList.size(); ++i) {
-        if (ipAddressesList.at(i) != QHostAddress::LocalHost && ipAddressesList.at(i).toIPv4Address()) {
-            ipAddress = ipAddressesList.at(i).toString();
-            break;
-        }
-    }
-    // if we did not find one, use IPv4 localhost
-    if (ipAddress.isEmpty())
-        ipAddress = QHostAddress(QHostAddress::LocalHost).toString();
-    log_->append(QString("Сервер запущен по адресу: IP: %1\t port: %2\n")
-                     .arg(ipAddress)
-                 .arg(tcpServer->serverPort()));
 }
 
 void Server::onClientConnected()
@@ -44,7 +26,7 @@ void Server::onClientConnected()
     log_->append("Клиент подключился");
     clientConnection_ = tcpServer->nextPendingConnection();
     connect(clientConnection_, &QAbstractSocket::disconnected,
-            this, &Server::onDisconnectClient);
+        this, &Server::onDisconnectClient);
 }
 
 void Server::onDisconnectClient()
@@ -67,10 +49,56 @@ void Server::initUi()
         spinOutPort_->setValue(asClientPort_);
 
         hbox->addStretch();
-        btnStart_ = new QPushButton("Start proxy");
+        btnStart_ = new QPushButton("Запустить прокси");
         hbox->addWidget(btnStart_);
         vbox->addLayout(hbox);
     }
     log_ = new QTextEdit();
     vbox->addWidget(log_);
+}
+
+void Server::startServer()
+{
+    btnStart_->setEnabled(false);
+    btnStart_->setText("Запуск...");
+    isStarted_ = false;
+
+    QTimer::singleShot(1, [&]() {
+        tcpServer = new QTcpServer(this);
+        if (!tcpServer->listen(QHostAddress::Any, asClientPort_)) {
+            log_->append(QString("Не удалось запустить сервер: %1.")
+                             .arg(tcpServer->errorString()));
+            btnStart_->setEnabled(true);
+            return;
+        }
+
+        QString ipAddress;
+        QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
+        for (int i = 0; i < ipAddressesList.size(); ++i) {
+            if (ipAddressesList.at(i) != QHostAddress::LocalHost && ipAddressesList.at(i).toIPv4Address()) {
+                ipAddress = ipAddressesList.at(i).toString();
+                break;
+            }
+        }
+        // if we did not find one, use IPv4 localhost
+        if (ipAddress.isEmpty())
+            ipAddress = QHostAddress(QHostAddress::LocalHost).toString();
+        log_->append(QString("Сервер запущен по адресу: %1:%2")
+                         .arg(ipAddress)
+                         .arg(tcpServer->serverPort()));
+        btnStart_->setEnabled(true);
+        isStarted_ = true;
+        btnStart_->setText("Остановить");
+    });
+}
+
+void Server::stopServer()
+{
+    tcpServer->close();
+
+    btnStart_->setEnabled(true);
+    btnStart_->setText("Запустить прокси");
+    isStarted_ = false;
+
+    log_->append("Сервер остановлен");
 }
