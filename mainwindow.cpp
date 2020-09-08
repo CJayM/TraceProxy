@@ -1,7 +1,11 @@
 #include "mainwindow.h"
 
+#include <QLabel>
+#include <QLineEdit>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QSplitter>
+#include <QTextEdit>
 #include <QVBoxLayout>
 
 MainWindow::MainWindow(QWidget* parent)
@@ -12,21 +16,12 @@ MainWindow::MainWindow(QWidget* parent)
     wdgt->setLayout(root);
     setCentralWidget(wdgt);
 
-    root->addWidget(new QPushButton("Btn1"));
-    root->addWidget(new QPushButton("Btn2"));
-    root->addWidget(new QPushButton("Btn3"));
-    root->addWidget(new QPushButton("Btn4"));
-    root->addWidget(new QPushButton("Btn5"));
-
     QSplitter* split = new QSplitter();
 
     root->addWidget(split);
     split->addWidget(makeLeftPanel());
-    split->addWidget(makeCentralPanel());
     split->addWidget(makeRightPanel());
-    decorateSplitter(split, 0);
     decorateSplitter(split, 1);
-    decorateSplitter(split, 2);
 }
 
 MainWindow::~MainWindow()
@@ -38,16 +33,15 @@ QWidget* MainWindow::makeLeftPanel()
     QWidget* res = new QWidget();
     auto vbox = new QVBoxLayout();
     res->setLayout(vbox);
-    vbox->addWidget(new QPushButton("Left panel"));
-    return res;
-}
-
-QWidget *MainWindow::makeCentralPanel()
-{
-    QWidget* res = new QWidget();
-    auto vbox = new QVBoxLayout();
-    res->setLayout(vbox);
-    vbox->addWidget(new QPushButton("Central panel"));
+    {
+        auto hbox = new QHBoxLayout();
+        hbox->addWidget(new QLabel("Input Port:"));
+        hbox->addWidget(new QSpinBox());
+        hbox->addStretch();
+        hbox->addWidget(new QPushButton("Start server"));
+        vbox->addLayout(hbox);
+    }
+    vbox->addWidget(new QTextEdit());
     return res;
 }
 
@@ -56,7 +50,19 @@ QWidget* MainWindow::makeRightPanel()
     QWidget* res = new QWidget();
     auto vbox = new QVBoxLayout();
     res->setLayout(vbox);
-    vbox->addWidget(new QPushButton("Right panel"));
+    {
+        auto hbox = new QHBoxLayout();
+        hbox->addWidget(new QLabel("Output Ip:"));
+        hbox->addWidget(new QLineEdit("127.0.0.1"));
+
+        hbox->addWidget(new QLabel("Port:"));
+        hbox->addWidget(new QSpinBox());
+
+        hbox->addStretch();
+        hbox->addWidget(new QPushButton("Connect"));
+        vbox->addLayout(hbox);
+    }
+    vbox->addWidget(new QTextEdit());
     return res;
 }
 
@@ -64,8 +70,6 @@ void MainWindow::decorateSplitter(QSplitter* splitter, int index)
 {
     Q_ASSERT(splitter != nullptr);
 
-    const int gripLength = 18;
-    const int gripWidth = 1;
     const int grips = 2;
 
     splitter->setOpaqueResize(false);
@@ -88,15 +92,13 @@ void MainWindow::decorateSplitter(QSplitter* splitter, int index)
             line->setFrameShape(QFrame::StyledPanel);
             layout->addWidget(line);
         }
-    }else{
+    } else {
         layout->addStretch();
         QVBoxLayout* vbox = new QVBoxLayout();
-        for(int i =0; i<grips; ++i){
+        for (int i = 0; i < grips; ++i) {
             QFrame* line = new QFrame(handle);
             line->setMinimumHeight(1);
             line->setMaximumHeight(1);
-//            line->setMinimumSize(gripWidth, gripLength);
-//            line->setMaximumSize(gripWidth, gripLength);
             line->setFrameShape(QFrame::StyledPanel);
             vbox->addWidget(line);
         }

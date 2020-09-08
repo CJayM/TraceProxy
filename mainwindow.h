@@ -13,7 +13,6 @@ public:
     ~MainWindow();
 
     QWidget* makeLeftPanel();
-    QWidget* makeCentralPanel();
     QWidget* makeRightPanel();
 
     void decorateSplitter(QSplitter* splitter, int index);
