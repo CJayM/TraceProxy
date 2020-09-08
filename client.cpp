@@ -20,6 +20,23 @@ Client::Client(QWidget* parent)
         this, &Client::onConnectBtnClicked);
 }
 
+bool Client::isConnected() const
+{
+    return isConnected_;
+}
+
+void Client::sendData(QByteArray data)
+{
+    if (isConnected_ == false)
+        return;
+
+    if (tcpSocket->isOpen() == false)
+        return;
+
+    log_->append(QString("Sending %1 bytes").arg(data.length()));
+    tcpSocket->write(data);
+}
+
 void Client::initUi()
 {
     auto vbox = new QVBoxLayout();
@@ -44,8 +61,8 @@ void Client::initUi()
         hbox->addWidget(btnConnect_);
         vbox->addLayout(hbox);
     }
-    logEdit_ = new QTextEdit();
-    vbox->addWidget(logEdit_);
+    log_ = new QTextEdit();
+    vbox->addWidget(log_);
 }
 
 void Client::clientConnect()
@@ -62,7 +79,7 @@ void Client::clientDisconnect()
     btnConnect_->setEnabled(false);
 
     tcpSocket->abort();
-    logEdit_->append("Отключено");
+    log_->append("Отключено");
     isConnected_ = false;
 
     btnConnect_->setText("Подключить");
@@ -80,7 +97,8 @@ void Client::onConnectBtnClicked()
 void Client::onDataRead()
 {
     auto data = tcpSocket->readAll();
-    logEdit_->append("Пришли данные");
+    emit dataReceived(data);
+    log_->append("Пришли данные");
 }
 
 void Client::onConnected()
@@ -88,7 +106,7 @@ void Client::onConnected()
     isConnected_ = true;
     btnConnect_->setText("Отключить");
     btnConnect_->setEnabled(true);
-    logEdit_->append("Подключено");
+    log_->append("Подключено");
 }
 
 void Client::displayError(QAbstractSocket::SocketError socketError)
@@ -97,13 +115,13 @@ void Client::displayError(QAbstractSocket::SocketError socketError)
     case QAbstractSocket::RemoteHostClosedError:
         break;
     case QAbstractSocket::HostNotFoundError:
-        logEdit_->append("Сервер не найден. Проверьте правильность указанных IP и порта.");
+        log_->append("Сервер не найден. Проверьте правильность указанных IP и порта.");
         break;
     case QAbstractSocket::ConnectionRefusedError:
-        logEdit_->append("Подключение отклонено.");
+        log_->append("Подключение отклонено.");
         break;
     default:
-        logEdit_->append(QString("Произошла следующая ошибка: %1.")
+        log_->append(QString("Произошла следующая ошибка: %1.")
                              .arg(tcpSocket->errorString()));
     }
 

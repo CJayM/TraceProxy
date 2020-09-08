@@ -9,7 +9,22 @@ Server::Server(QWidget* parent)
 {
     initUi();
     connect(btnStart_, &QPushButton::clicked, this, &Server::onStartClicked);
-    connect(tcpServer, &QTcpServer::newConnection, this, &Server::onClientConnected);
+}
+
+bool Server::isConnected() const
+{
+    return isConnected_;
+}
+
+void Server::sendData(QByteArray data)
+{
+    if (isConnected_ == false)
+        return;
+    if (clientConnection_->isOpen() == false)
+        return;
+
+    log_->append(QString("Sending %1 bytes").arg(data.length()));
+    clientConnection_->write(data);
 }
 
 void Server::onStartClicked()
@@ -24,16 +39,27 @@ void Server::onStartClicked()
 void Server::onClientConnected()
 {
     log_->append("Клиент подключился");
+    isConnected_ = true;
     clientConnection_ = tcpServer->nextPendingConnection();
     connect(clientConnection_, &QAbstractSocket::disconnected,
         this, &Server::onDisconnectClient);
+    connect(clientConnection_, &QIODevice::readyRead, this, &Server::onDataRead);
 }
 
 void Server::onDisconnectClient()
 {
     clientConnection_->deleteLater();
     clientConnection_ = nullptr;
+    isConnected_ = false;
+
     log_->append("Клиент отключён");
+}
+
+void Server::onDataRead()
+{
+    auto data = clientConnection_->readAll();
+    emit dataReceived(data);
+    log_->append("Пришли данные");
 }
 
 void Server::initUi()
@@ -65,6 +91,8 @@ void Server::startServer()
 
     QTimer::singleShot(1, [&]() {
         tcpServer = new QTcpServer(this);
+        connect(tcpServer, &QTcpServer::newConnection, this, &Server::onClientConnected);
+
         if (!tcpServer->listen(QHostAddress::Any, asClientPort_)) {
             log_->append(QString("Не удалось запустить сервер: %1.")
                              .arg(tcpServer->errorString()));
