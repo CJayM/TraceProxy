@@ -33,16 +33,16 @@ private:
     QPushButton* btnStart_ = nullptr;
     QTcpServer* tcpServer = nullptr;
     QTextEdit* log_ = nullptr;
-    bool isStarted_ = false;
+    bool isProxyStarted_ = false;
     bool isConnected_ = false;
 
     QTcpSocket* clientConnection_ = nullptr;
     QQueue<std::pair<QDateTime, QByteArray>> toServerQueue_;
 
     void initUi();
-    void startServer();
-    void stopServer();
-    bool isConnected() const;
+    void startProxy();
+    void stopProxy();
+    bool isClientConnected() const;
     QWidget* makeLeftPanel();
     // end proxy
 };

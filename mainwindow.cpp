@@ -2,10 +2,12 @@
 
 #include <QLabel>
 #include <QLineEdit>
+#include <QNetworkInterface>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QSplitter>
 #include <QTextEdit>
+#include <QTimer>
 #include <QVBoxLayout>
 
 MainWindow::MainWindow(QWidget* parent)
@@ -24,8 +26,6 @@ MainWindow::MainWindow(QWidget* parent)
     split->addWidget(makeLeftPanel());
     split->addWidget(&asClient);
     decorateSplitter(split, 1);
-
-    //    connect(btnStart_, &QPushButton::clicked, this, &Proxy::onStartClicked);
 }
 
 MainWindow::~MainWindow()
@@ -75,17 +75,89 @@ void MainWindow::decorateSplitter(QSplitter* splitter, int index)
 
 void MainWindow::onStartClicked()
 {
+    if (isProxyStarted_) {
+        stopProxy();
+    } else {
+        startProxy();
+    }
 }
 
 void MainWindow::onClientConnected()
 {
+    log_->append("Клиент подключился");
+    isConnected_ = true;
+    clientConnection_ = tcpServer->nextPendingConnection();
+    connect(clientConnection_, &QAbstractSocket::disconnected,
+        this, &MainWindow::onDisconnectClient);
+    connect(clientConnection_, &QIODevice::readyRead, this, &MainWindow::onDataRead);
 }
 
 void MainWindow::onDisconnectClient()
 {
+    clientConnection_->deleteLater();
+    clientConnection_ = nullptr;
+    isConnected_ = false;
+
+    if (log_)
+        log_->append("Клиент отключён");
 }
 
 void MainWindow::onDataRead()
+{
+    auto data = clientConnection_->readAll();
+    //        emit dataReceived(data);
+    log_->append("Пришли данные");
+}
+
+void MainWindow::startProxy()
+{
+    btnStart_->setEnabled(false);
+    btnStart_->setText("Запуск...");
+    isProxyStarted_ = false;
+
+    QTimer::singleShot(1, [&]() {
+        tcpServer = new QTcpServer(this);
+        connect(tcpServer, &QTcpServer::newConnection, this, &MainWindow::onClientConnected);
+
+        if (!tcpServer->listen(QHostAddress::Any, asClientPort_)) {
+            log_->append(QString("Не удалось запустить сервер: %1.")
+                             .arg(tcpServer->errorString()));
+            btnStart_->setEnabled(true);
+            return;
+        }
+
+        QString ipAddress;
+        QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
+        for (int i = 0; i < ipAddressesList.size(); ++i) {
+            if (ipAddressesList.at(i) != QHostAddress::LocalHost && ipAddressesList.at(i).toIPv4Address()) {
+                ipAddress = ipAddressesList.at(i).toString();
+                break;
+            }
+        }
+        // if we did not find one, use IPv4 localhost
+        if (ipAddress.isEmpty())
+            ipAddress = QHostAddress(QHostAddress::LocalHost).toString();
+        log_->append(QString("Сервер запущен по адресу: %1:%2")
+                         .arg(ipAddress)
+                         .arg(tcpServer->serverPort()));
+        btnStart_->setEnabled(true);
+        isProxyStarted_ = true;
+        btnStart_->setText("Остановить");
+    });
+}
+
+void MainWindow::stopProxy()
+{
+    tcpServer->close();
+
+    btnStart_->setEnabled(true);
+    btnStart_->setText("Запустить прокси");
+    isProxyStarted_ = false;
+
+    log_->append("Сервер остановлен");
+}
+
+bool MainWindow::isClientConnected() const
 {
 }
 
@@ -109,6 +181,8 @@ QWidget* MainWindow::makeLeftPanel()
     }
     log_ = new QTextEdit(res);
     vbox->addWidget(log_);
+
+    connect(btnStart_, &QPushButton::clicked, this, &MainWindow::onStartClicked);
 
     return res;
 }
