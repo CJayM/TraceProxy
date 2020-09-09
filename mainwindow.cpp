@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 
 #include <QAbstractSocket>
-#include <QAbstractSocket>
 #include <QLabel>
 #include <QLineEdit>
 #include <QNetworkInterface>
@@ -11,6 +10,8 @@
 #include <QTextEdit>
 #include <QTimer>
 #include <QVBoxLayout>
+
+const int DELTA_TIME = 5000;
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -28,6 +29,8 @@ MainWindow::MainWindow(QWidget* parent)
     split->addWidget(makeLeftPanel());
     split->addWidget(makeServerPanel());
     decorateSplitter(split, 1);
+
+    processQueue();
 }
 
 MainWindow::~MainWindow()
@@ -113,23 +116,66 @@ void MainWindow::onDisconnectClient()
 void MainWindow::onDataRead()
 {
     auto data = clientConnection_->readAll();
-    //        emit dataReceived(data);
+    qDebug() << QDateTime::currentDateTimeUtc();
+    toServerQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc().addMSecs(DELTA_TIME), data));
     log_->append("Пришли данные");
 }
 
 void MainWindow::onServerDataRead()
 {
-    qWarning()  << "Not implemented MainWindow::onServerDataRead";
+    auto data = tcpSocket->readAll();
+    toClientQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc(), data));
+    fromServerlog_->append("Пришли данные");
 }
 
 void MainWindow::onConnectedToServer()
 {
-    qWarning()  << "Not implemented MainWindow::onConnectedToServer";
+    hasServerConnection_ = true;
+    fromServerlog_->append("Создано подключение");
+    fromServerlog_->setEnabled(true);
+    lblConnection_->setText("Подключено");
 }
 
 void MainWindow::displayError(QAbstractSocket::SocketError socketError)
 {
-    qWarning()  << "Not implemented MainWindow::displayError";
+    qWarning() << "Not implemented MainWindow::displayError";
+}
+
+void MainWindow::processQueue()
+{
+    auto currentTime = QDateTime::currentDateTimeUtc();
+
+    if (toServerQueue_.isEmpty() == false) {
+        if (hasServerConnection_) {
+            while (toServerQueue_.isEmpty() == false) {
+                if (toServerQueue_.head().first > currentTime)
+                    break;
+
+                if (tcpSocket->isOpen() == false)
+                    break;
+
+                auto pair = toServerQueue_.dequeue();
+                tcpSocket->write(pair.second);
+            }
+        }
+    }
+
+    if (toClientQueue_.isEmpty() == false) {
+        if (isConnected_) {
+            while (toClientQueue_.isEmpty() == false) {
+                if (toClientQueue_.head().first > currentTime)
+                    break;
+
+                if (clientConnection_->isOpen() == false)
+                    break;
+
+                auto pair = toClientQueue_.dequeue();
+                clientConnection_->write(pair.second);
+            }
+        }
+    }
+
+    QTimer::singleShot(DELTA_TIME, this, &MainWindow::processQueue);
 }
 
 void MainWindow::startProxy()
@@ -204,6 +250,7 @@ QWidget* MainWindow::makeLeftPanel()
     }
     log_ = new QTextEdit(res);
     vbox->addWidget(log_);
+    log_->setReadOnly(true);
 
     connect(btnStart_, &QPushButton::clicked, this, &MainWindow::onStartClicked);
 
@@ -237,6 +284,8 @@ QWidget* MainWindow::makeServerPanel()
         vbox->addLayout(hbox);
     }
     fromServerlog_ = new QTextEdit();
+    fromServerlog_->setReadOnly(true);
+    fromServerlog_->setEnabled(false);
     vbox->addWidget(fromServerlog_);
 
     return res;
@@ -250,7 +299,7 @@ void MainWindow::connectToServer()
     connect(tcpSocket, static_cast<void (QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),
         this, &MainWindow::displayError);
 
-    fromServerlog_->append("Создано подключение");
+    tcpSocket->connectToHost(serverIp_, serverPort_);
 }
 
 void MainWindow::disconnectFromServer()
@@ -259,6 +308,9 @@ void MainWindow::disconnectFromServer()
         tcpSocket->close();
         tcpSocket->deleteLater();
         tcpSocket = nullptr;
-        fromServerlog_->append("Отключён");
     }
+
+    fromServerlog_->append("Отключён");
+    fromServerlog_->setEnabled(false);
+    lblConnection_->setText("Отключён");
 }

@@ -34,6 +34,8 @@ private slots:
     void onConnectedToServer();
     void displayError(QAbstractSocket::SocketError socketError);
 
+    void processQueue();
+
 private:
     // proxy
     int asClientPort_ = 3031;
@@ -46,7 +48,7 @@ private:
     bool isConnected_ = false;
 
     QTcpSocket* clientConnection_ = nullptr;
-    QQueue<std::pair<QDateTime, QByteArray>> toServerQueue_;
+
 
     void initUi();
     void startProxy();
@@ -54,6 +56,9 @@ private:
     bool isClientConnected() const;
     QWidget* makeLeftPanel();
     // end proxy
+
+    QQueue<std::pair<QDateTime, QByteArray>> toClientQueue_;
+    QQueue<std::pair<QDateTime, QByteArray>> toServerQueue_;
 
 
     // client to server
@@ -67,8 +72,6 @@ private:
 
     QTcpSocket* tcpSocket = nullptr;
     bool hasServerConnection_ = false;
-
-    QQueue<std::pair<QDateTime, QByteArray>> toClientQueue_;
 
     QWidget* makeServerPanel();
     void clientConnect();
