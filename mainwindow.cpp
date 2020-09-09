@@ -75,7 +75,7 @@ void MainWindow::onDataRead()
     toServerQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc(), data));
     setRightQueuSizeLabel(toServerQueue_.length());
     log_->append(QString("Пришли данные %1").arg(data.length()));
-    log_->append(data.toHex(' '));
+    log_->append(data.toHex());
 }
 
 void MainWindow::onServerDataRead()
@@ -84,7 +84,7 @@ void MainWindow::onServerDataRead()
     toClientQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc(), data));
     setLeftQueuSizeLabel(toClientQueue_.length());
     fromServerlog_->append(QString("Пришли данные %1").arg(data.length()));
-    fromServerlog_->append(data.toHex(' '));
+    fromServerlog_->append(data.toHex());
 }
 
 void MainWindow::onConnectedToServer()
