@@ -72,14 +72,14 @@ void MainWindow::onDisconnectClient()
 void MainWindow::onDataRead()
 {
     auto data = toServerSocket_->readAll();
-    toServerQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc().addMSecs(sendDelay_), data));
+    toServerQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc(), data));
     log_->append(QString("Пришли данные %1").arg(data.length()));
 }
 
 void MainWindow::onServerDataRead()
 {
     auto data = tcpSocket->readAll();
-    toClientQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc().addMSecs(sendDelay_), data));
+    toClientQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc(), data));
     fromServerlog_->append(QString("Пришли данные %1").arg(data.length()));
 }
 
@@ -99,11 +99,12 @@ void MainWindow::displayError(QAbstractSocket::SocketError socketError)
 void MainWindow::processQueue()
 {
     auto currentTime = QDateTime::currentDateTimeUtc();
+    auto past = currentTime.addMSecs(-sendDelay_);
 
     if (toServerQueue_.isEmpty() == false) {
         if (hasServerConnection_) {
             while (toServerQueue_.isEmpty() == false) {
-                if (toServerQueue_.head().first > currentTime)
+                if (toServerQueue_.head().first < past)
                     break;
 
                 if (tcpSocket->isOpen() == false)
@@ -118,7 +119,7 @@ void MainWindow::processQueue()
     if (toClientQueue_.isEmpty() == false) {
         if (isConnected_) {
             while (toClientQueue_.isEmpty() == false) {
-                if (toClientQueue_.head().first > currentTime)
+                if (toClientQueue_.head().first < past)
                     break;
 
                 if (toServerSocket_->isOpen() == false)
