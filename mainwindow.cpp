@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 
+#include "utils.h"
 #include <QAbstractSocket>
 #include <QLabel>
 #include <QLineEdit>
@@ -10,7 +11,6 @@
 #include <QTextEdit>
 #include <QTimer>
 #include <QVBoxLayout>
-#include "utils.h"
 
 const int DELTA_TIME = 5000;
 
@@ -33,11 +33,6 @@ MainWindow::MainWindow(QWidget* parent)
 
     processQueue();
 }
-
-MainWindow::~MainWindow()
-{
-}
-
 
 void MainWindow::onStartClicked()
 {
@@ -201,6 +196,9 @@ QWidget* MainWindow::makeLeftPanel()
         spinOutPort_->setMaximumWidth(70);
 
         hbox->addWidget(spinOutPort_);
+        connect(spinOutPort_, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int val) {
+            asClientPort_ = val;
+        });
 
         btnStart_ = new QPushButton("Запустить прокси");
         hbox->addWidget(btnStart_);
@@ -214,6 +212,10 @@ QWidget* MainWindow::makeLeftPanel()
         delaySpin->setMaximumWidth(70);
         delaySpin->setRange(0, 30000);
         delaySpin->setValue(sendDelay_);
+
+        connect(delaySpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int val) {
+            sendDelay_ = val;
+        });
 
         vbox->addLayout(hbox);
     }
@@ -238,15 +240,24 @@ QWidget* MainWindow::makeRightPanel()
         hbox->addWidget(new QLabel("Server IP:"));
         editIp_ = new QLineEdit();
         editIp_->setMaximumWidth(120);
-        editIp_->setText(serverIp_);
+        editIp_->setText(serverIp_);        
         hbox->addWidget(editIp_);
+
+        connect(editIp_, &QLineEdit::textChanged, [&](QString val) {
+            serverIp_ = val;
+        });
 
         hbox->addWidget(new QLabel("Port:"));
         spinPort_ = new QSpinBox();
         spinPort_->setMaximumWidth(70);
         spinPort_->setRange(1024, 0xffff);
-        hbox->addWidget(spinPort_);
         spinPort_->setValue(serverPort_);
+        hbox->addWidget(spinPort_);
+
+        connect(spinPort_, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int val) {
+            serverPort_ = val;
+        });
+
 
         hbox->addStretch(0);
         lblConnection_ = new QLabel("Не подключён");
