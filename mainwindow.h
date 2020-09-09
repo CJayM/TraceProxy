@@ -41,6 +41,8 @@ private:
     QLineEdit* editOutIp_ = nullptr;
     QSpinBox* spinOutPort_ = nullptr;
     QPushButton* btnStart_ = nullptr;
+    QLabel* leftQueuSizeLbl_ = nullptr;
+    QLabel* rightQueuSizeLbl_ = nullptr;
     QTcpServer* tcpServer = nullptr;
     QTcpSocket* toServerSocket_ = nullptr;
     QTextEdit* log_ = nullptr;
@@ -50,6 +52,8 @@ private:
     void initUi();
     void startProxy();
     void stopProxy();
+    void setLeftQueuSizeLabel(int size);
+    void setRightQueuSizeLabel(int size);
     QWidget* makeLeftPanel();
     // end proxy
 

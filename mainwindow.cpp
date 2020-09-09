@@ -73,14 +73,18 @@ void MainWindow::onDataRead()
 {
     auto data = toServerSocket_->readAll();
     toServerQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc(), data));
+    setRightQueuSizeLabel(toServerQueue_.length());
     log_->append(QString("Пришли данные %1").arg(data.length()));
+    log_->append(data.toHex(' '));
 }
 
 void MainWindow::onServerDataRead()
 {
     auto data = tcpSocket->readAll();
     toClientQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc(), data));
+    setLeftQueuSizeLabel(toClientQueue_.length());
     fromServerlog_->append(QString("Пришли данные %1").arg(data.length()));
+    fromServerlog_->append(data.toHex(' '));
 }
 
 void MainWindow::onConnectedToServer()
@@ -103,14 +107,15 @@ void MainWindow::processQueue()
 
     if (toServerQueue_.isEmpty() == false) {
         if (hasServerConnection_) {
-            while (toServerQueue_.isEmpty() == false) {
-                if (toServerQueue_.head().first < past)
+            while (toServerQueue_.isEmpty() == false) {                
+                if (toServerQueue_.head().first > past)
                     break;
 
                 if (tcpSocket->isOpen() == false)
                     break;
 
                 auto pair = toServerQueue_.dequeue();
+                setRightQueuSizeLabel(toServerQueue_.length());
                 tcpSocket->write(pair.second);
             }
         }
@@ -119,13 +124,14 @@ void MainWindow::processQueue()
     if (toClientQueue_.isEmpty() == false) {
         if (isConnected_) {
             while (toClientQueue_.isEmpty() == false) {
-                if (toClientQueue_.head().first < past)
+                if (toClientQueue_.head().first > past)
                     break;
 
                 if (toServerSocket_->isOpen() == false)
                     break;
 
                 auto pair = toClientQueue_.dequeue();
+                setLeftQueuSizeLabel(toClientQueue_.length());
                 toServerSocket_->write(pair.second);
             }
         }
@@ -182,6 +188,16 @@ void MainWindow::stopProxy()
     log_->append("Сервер остановлен");
 }
 
+void MainWindow::setLeftQueuSizeLabel(int size)
+{
+    leftQueuSizeLbl_->setText(QString("В очереди пачек: %1").arg(size));
+}
+
+void MainWindow::setRightQueuSizeLabel(int size)
+{
+    rightQueuSizeLbl_->setText(QString("В очереди пачек: %1 ").arg(size));
+}
+
 QWidget* MainWindow::makeLeftPanel()
 {
     QWidget* res = new QWidget();
@@ -220,6 +236,14 @@ QWidget* MainWindow::makeLeftPanel()
 
         vbox->addLayout(hbox);
     }
+
+    {
+        auto hbox = new QHBoxLayout();
+        vbox->addLayout(hbox);
+        leftQueuSizeLbl_ = new QLabel();
+        hbox->addWidget(leftQueuSizeLbl_);
+    }
+
     log_ = new QTextEdit(res);
     vbox->addWidget(log_);
     log_->setReadOnly(true);
@@ -265,6 +289,14 @@ QWidget* MainWindow::makeRightPanel()
         hbox->addWidget(lblConnection_);
         vbox->addLayout(hbox);
     }
+
+    {
+        auto hbox = new QHBoxLayout();
+        vbox->addLayout(hbox);
+        rightQueuSizeLbl_ = new QLabel();
+        hbox->addWidget(rightQueuSizeLbl_);
+    }
+
 
     fromServerlog_ = new QTextEdit();
     fromServerlog_->setReadOnly(true);
