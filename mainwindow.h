@@ -19,9 +19,7 @@ class MainWindow : public QMainWindow {
 
 public:
     MainWindow(QWidget* parent = nullptr);
-    ~MainWindow();
-
-    void decorateSplitter(QSplitter* splitter, int index);
+    ~MainWindow();    
 
 private slots:
     void onStartClicked();
