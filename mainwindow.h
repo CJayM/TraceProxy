@@ -1,18 +1,18 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QAbstractSocket>
+#include <QByteArray>
 #include <QDateTime>
+#include <QLabel>
 #include <QMainWindow>
 #include <QPushButton>
+#include <QQueue>
 #include <QSpinBox>
 #include <QSplitter>
 #include <QTcpServer>
-#include <QTextEdit>
-#include <QByteArray>
-#include <QLabel>
-#include <QQueue>
 #include <QTcpSocket>
-#include <QAbstractSocket>
+#include <QTextEdit>
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -37,29 +37,27 @@ private slots:
     void processQueue();
 
 private:
+    int sendDelay_ = 100;
+
     // proxy
     int asClientPort_ = 3031;
     QLineEdit* editOutIp_ = nullptr;
     QSpinBox* spinOutPort_ = nullptr;
     QPushButton* btnStart_ = nullptr;
     QTcpServer* tcpServer = nullptr;
+    QTcpSocket* toServerSocket_ = nullptr;
     QTextEdit* log_ = nullptr;
     bool isProxyStarted_ = false;
     bool isConnected_ = false;
 
-    QTcpSocket* clientConnection_ = nullptr;
-
-
     void initUi();
     void startProxy();
     void stopProxy();
-    bool isClientConnected() const;
     QWidget* makeLeftPanel();
     // end proxy
 
     QQueue<std::pair<QDateTime, QByteArray>> toClientQueue_;
     QQueue<std::pair<QDateTime, QByteArray>> toServerQueue_;
-
 
     // client to server
     QSpinBox* spinPort_ = nullptr;
@@ -73,7 +71,7 @@ private:
     QTcpSocket* tcpSocket = nullptr;
     bool hasServerConnection_ = false;
 
-    QWidget* makeServerPanel();
+    QWidget* makeRightPanel();
     void clientConnect();
     void clientDisconnect();
     void connectToServer();

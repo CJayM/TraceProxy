@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     root->addWidget(split);
     split->addWidget(makeLeftPanel());
-    split->addWidget(makeServerPanel());
+    split->addWidget(makeRightPanel());
     decorateSplitter(split, 1);
 
     processQueue();
@@ -91,19 +91,19 @@ void MainWindow::onClientConnected()
 {
     log_->append("Клиент подключился");
     isConnected_ = true;
-    clientConnection_ = tcpServer->nextPendingConnection();
-    connect(clientConnection_, &QAbstractSocket::disconnected,
+    toServerSocket_ = tcpServer->nextPendingConnection();
+    connect(toServerSocket_, &QAbstractSocket::disconnected,
         this, &MainWindow::onDisconnectClient);
-    connect(clientConnection_, &QIODevice::readyRead, this, &MainWindow::onDataRead);
+    connect(toServerSocket_, &QIODevice::readyRead, this, &MainWindow::onDataRead);
 
     connectToServer();
 }
 
 void MainWindow::onDisconnectClient()
 {
-    if (clientConnection_) {
-        clientConnection_->deleteLater();
-        clientConnection_ = nullptr;
+    if (toServerSocket_) {
+        toServerSocket_->deleteLater();
+        toServerSocket_ = nullptr;
     }
     isConnected_ = false;
 
@@ -115,17 +115,16 @@ void MainWindow::onDisconnectClient()
 
 void MainWindow::onDataRead()
 {
-    auto data = clientConnection_->readAll();
-    qDebug() << QDateTime::currentDateTimeUtc();
-    toServerQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc().addMSecs(DELTA_TIME), data));
-    log_->append("Пришли данные");
+    auto data = toServerSocket_->readAll();
+    toServerQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc().addMSecs(sendDelay_), data));
+    log_->append(QString("Пришли данные %1").arg(data.length()));
 }
 
 void MainWindow::onServerDataRead()
 {
     auto data = tcpSocket->readAll();
-    toClientQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc(), data));
-    fromServerlog_->append("Пришли данные");
+    toClientQueue_.append(std::make_pair(QDateTime::currentDateTimeUtc().addMSecs(sendDelay_), data));
+    fromServerlog_->append(QString("Пришли данные %1").arg(data.length()));
 }
 
 void MainWindow::onConnectedToServer()
@@ -166,11 +165,11 @@ void MainWindow::processQueue()
                 if (toClientQueue_.head().first > currentTime)
                     break;
 
-                if (clientConnection_->isOpen() == false)
+                if (toServerSocket_->isOpen() == false)
                     break;
 
                 auto pair = toClientQueue_.dequeue();
-                clientConnection_->write(pair.second);
+                toServerSocket_->write(pair.second);
             }
         }
     }
@@ -226,10 +225,6 @@ void MainWindow::stopProxy()
     log_->append("Сервер остановлен");
 }
 
-bool MainWindow::isClientConnected() const
-{
-}
-
 QWidget* MainWindow::makeLeftPanel()
 {
     QWidget* res = new QWidget();
@@ -240,12 +235,25 @@ QWidget* MainWindow::makeLeftPanel()
         hbox->addWidget(new QLabel("Port:"));
         spinOutPort_ = new QSpinBox();
         spinOutPort_->setRange(1024, 0xffff);
-        hbox->addWidget(spinOutPort_);
         spinOutPort_->setValue(asClientPort_);
+        spinOutPort_->setMinimumWidth(70);
+        spinOutPort_->setMaximumWidth(70);
 
-        hbox->addStretch();
+        hbox->addWidget(spinOutPort_);
+
         btnStart_ = new QPushButton("Запустить прокси");
         hbox->addWidget(btnStart_);
+
+        hbox->addStretch();
+
+        hbox->addWidget(new QLabel("Задержка:"));
+        auto delaySpin = new QSpinBox();
+        hbox->addWidget(delaySpin);
+        delaySpin->setMinimumWidth(70);
+        delaySpin->setMaximumWidth(70);
+        delaySpin->setRange(0, 30000);
+        delaySpin->setValue(sendDelay_);
+
         vbox->addLayout(hbox);
     }
     log_ = new QTextEdit(res);
@@ -257,12 +265,13 @@ QWidget* MainWindow::makeLeftPanel()
     return res;
 }
 
-QWidget* MainWindow::makeServerPanel()
+QWidget* MainWindow::makeRightPanel()
 {
     QWidget* res = new QWidget();
 
     auto vbox = new QVBoxLayout();
     res->setLayout(vbox);
+
     {
         auto hbox = new QHBoxLayout();
         hbox->addWidget(new QLabel("Server IP:"));
@@ -283,6 +292,7 @@ QWidget* MainWindow::makeServerPanel()
         hbox->addWidget(lblConnection_);
         vbox->addLayout(hbox);
     }
+
     fromServerlog_ = new QTextEdit();
     fromServerlog_->setReadOnly(true);
     fromServerlog_->setEnabled(false);
