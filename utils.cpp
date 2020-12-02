@@ -8,7 +8,7 @@ void decorateSplitter(QSplitter* splitter, int index)
 
     const int grips = 2;
 
-    splitter->setOpaqueResize(false);
+    splitter->setOpaqueResize(true);
     splitter->setChildrenCollapsible(false);
 
     splitter->setHandleWidth(7);
