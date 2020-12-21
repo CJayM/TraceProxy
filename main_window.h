@@ -7,6 +7,7 @@
 #include <QDateTime>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include "QHexView.h"
 
 namespace Ui {
 class MainWindow;
@@ -35,8 +36,6 @@ private slots:
     void processQueue();
 
 private:
-
-
     // proxy
     int asClientPort_ = 3030;
 //    QLineEdit* editOutIp_ = nullptr;
@@ -45,6 +44,8 @@ private:
 //    QTextEdit* log_ = nullptr;
     bool isProxyStarted_ = false;
     bool isConnected_ = false;
+
+    QHexView* hexView_ = nullptr;
 
     void initUi();
     void startProxy();
@@ -60,6 +61,8 @@ private:
 
     int serverPort_ = 3031;
     QString serverIp_ = "127.0.0.1";
+
+    QByteArray hexData_;
 
     QTcpSocket* tcpSocket = nullptr;
     bool hasServerConnection_ = false;

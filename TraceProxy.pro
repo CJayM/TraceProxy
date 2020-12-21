@@ -18,10 +18,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     main_window.cpp \
+    QHexView.cpp \
     utils.cpp
 
 HEADERS += \
     main_window.h \
+    QHexView.h \
     utils.h
 
 # Default rules for deployment.

@@ -15,6 +15,14 @@ MainWindow::MainWindow(QWidget* parent)
 {
     ui->setupUi(this);
 
+    hexView_ = new QHexView();
+    ui->hexLayout->addWidget(hexView_);
+
+    for(int i=0; i < 1000; ++i)
+        hexData_.append('8');
+
+    hexView_->setData(new QHexView::DataStorageArray(hexData_));
+
     connect(ui->proxyPortSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int val) {
         asClientPort_ = val;
     });
